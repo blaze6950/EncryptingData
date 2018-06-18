@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -20,29 +21,40 @@ namespace EncryptingData
     /// </summary>
     public partial class MainWindow : Window
     {
+        private Model _model;
         public MainWindow()
         {
             InitializeComponent();
+            _model = new Model();
         }
 
         private void ButtonFile_Click(object sender, RoutedEventArgs e)
         {
-
+            var fileD = new OpenFileDialog();
+            fileD.Multiselect = false;
+            var res = fileD.ShowDialog();
+            if (res != null && res == true)
+            {
+                _model.Path = fileD.FileName;
+                TextBoxPathFile.Text = _model.Path;
+            }
         }
 
         private void ButtonStart_Click(object sender, RoutedEventArgs e)
         {
-
+            if ((bool)RadioButtonEncrypt.IsChecked)
+            {
+                _model.StartEncrypt();
+            }
+            else
+            {
+                _model.StartDecipher();
+            }
         }
 
         private void ButtonCancel_Click(object sender, RoutedEventArgs e)
         {
-
-        }
-
-        private void RadioButton_Checked(object sender, RoutedEventArgs e)
-        {
-
-        }
+            _model.TokenSource.Cancel();
+        }        
     }
 }
