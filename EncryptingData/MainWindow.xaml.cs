@@ -24,5 +24,25 @@ namespace EncryptingData
         {
             InitializeComponent();
         }
+
+        private void ButtonFile_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void ButtonStart_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void ButtonCancel_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void RadioButton_Checked(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
 }
