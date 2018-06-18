@@ -44,7 +44,7 @@ namespace EncryptingData
         {
             if ((bool)RadioButtonEncrypt.IsChecked)
             {
-                _model.StartEncrypt();
+                _model.StartEncrypt(TextBoxKey.Text);
             }
             else
             {
