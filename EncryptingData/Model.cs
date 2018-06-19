@@ -36,14 +36,17 @@ namespace EncryptingData
                 RijndaelManaged RMCrypto = new RijndaelManaged();
 
                 CryptoStream cs = new CryptoStream(fsCrypt,
-                    RMCrypto.CreateEncryptor(/*key, key*/),
+                    RMCrypto.CreateEncryptor(key, key),
                     CryptoStreamMode.Write);
 
                 FileStream fsIn = new FileStream(_path, FileMode.Open);
 
                 int data;
                 while ((data = fsIn.ReadByte()) != -1)
-                    cs.WriteByte((byte) data);
+                {
+                    cs.WriteByte((byte)data);
+                    _tokenSource.Token.ThrowIfCancellationRequested();
+                }
 
 
                 fsIn.Close();
@@ -67,9 +70,49 @@ namespace EncryptingData
             }
         }
 
-        public void StartDecipher()
+        public void StartDecipher(String password)
         {
+            try
+            {
+                UnicodeEncoding UE = new UnicodeEncoding();
+                byte[] key = UE.GetBytes(password);
 
+                string cryptFile = _path;
+                FileStream fsCrypt = new FileStream(cryptFile, FileMode.Open);
+
+                RijndaelManaged RMCrypto = new RijndaelManaged();
+
+                CryptoStream cs = new CryptoStream(fsCrypt,
+                    RMCrypto.CreateDecryptor(key, key),
+                    CryptoStreamMode.Read);
+
+                StreamReader SReader = new StreamReader(cs);
+                var file = SReader.ReadToEnd();
+
+                //FileStream fsIn = new FileStream(cryptFile.Remove(cryptFile.IndexOf(" enc"), 4), FileMode.Create);
+                //fsIn.
+
+                File.WriteAllText(cryptFile.Remove(cryptFile.IndexOf(" enc"), 4), file);
+
+                SReader.Close();
+                cs.Close();
+                fsCrypt.Close();
+            }
+            catch (AggregateException ae)
+            {
+                if (ae.InnerException is OperationCanceledException)
+                {
+                    MessageBox.Show("Decrypting was canceled!", "+");
+                }
+                else
+                {
+                    MessageBox.Show(ae.Message, "Oooops");
+                }
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.Message, "Oooops");
+            }
         }
     }
 }

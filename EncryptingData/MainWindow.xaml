@@ -23,7 +23,7 @@
             <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center" Width="75" TextAlignment="Center">Key:</TextBlock>
             <TextBox DockPanel.Dock="Left" Name="TextBoxKey" VerticalContentAlignment="Center" Width="200"></TextBox>
             <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center" Margin="20 0 0 0">
-                <RadioButton Name="RadioButtonEncrypt">encrypt</RadioButton>
+                <RadioButton Name="RadioButtonEncrypt" IsChecked="True">encrypt</RadioButton>
                 <RadioButton Name="RadioButtonDecipher" Margin="10 0 0 0">decipher</RadioButton>
             </StackPanel>
         </DockPanel>

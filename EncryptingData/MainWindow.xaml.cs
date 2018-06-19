@@ -42,13 +42,21 @@ namespace EncryptingData
 
         private void ButtonStart_Click(object sender, RoutedEventArgs e)
         {
-            if ((bool)RadioButtonEncrypt.IsChecked)
+            if (TextBoxKey.Text.Length >= 8)
             {
-                _model.StartEncrypt(TextBoxKey.Text);
+                if ((bool) RadioButtonEncrypt.IsChecked)
+                {
+                    _model.StartEncrypt(TextBoxKey.Text);
+                }
+                else
+                {
+                    _model.StartDecipher(TextBoxKey.Text);
+                }
             }
             else
             {
-                _model.StartDecipher();
+                MessageBox.Show("Key length must be at least 8 characters!", "Ooops", MessageBoxButton.OK,
+                    MessageBoxImage.Exclamation);
             }
         }
 
