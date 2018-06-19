@@ -10,10 +10,16 @@ using System.Windows;
 
 namespace EncryptingData
 {
+
+    public delegate void ProgressChanged(double progress);
+    public delegate void ActionEnded();
+
     class Model
     {
         private string _path;
         private CancellationTokenSource _tokenSource;
+        public event ProgressChanged OnProgressChanged;
+        public event ActionEnded OnActionEnded;
 
         public Model()
         {
@@ -24,6 +30,11 @@ namespace EncryptingData
         public CancellationTokenSource TokenSource { get => _tokenSource; set => _tokenSource = value; }
 
         public void StartEncrypt(String password)
+        {
+            Task.Run(() => Encrypt(password));
+        }
+
+        public void Encrypt(String password)
         {
             try
             {
@@ -41,17 +52,23 @@ namespace EncryptingData
 
                 FileStream fsIn = new FileStream(_path, FileMode.Open);
 
-                int data;
+                long fileLength = fsIn.Length;
+                long totalBytes = 0;
+                int data = 0;
                 while ((data = fsIn.ReadByte()) != -1)
                 {
+                    totalBytes += data;
+                    double persentage = (double)totalBytes * 100.0 / fileLength;
                     cs.WriteByte((byte)data);
                     _tokenSource.Token.ThrowIfCancellationRequested();
+                    OnProgressChanged(persentage);
                 }
 
 
                 fsIn.Close();
                 cs.Close();
                 fsCrypt.Close();
+                OnActionEnded();
             }
             catch (AggregateException ae)
             {
@@ -76,7 +93,6 @@ namespace EncryptingData
             {
                 UnicodeEncoding UE = new UnicodeEncoding();
                 byte[] key = UE.GetBytes(password);
-
                 string cryptFile = _path;
                 FileStream fsCrypt = new FileStream(cryptFile, FileMode.Open);
 
@@ -86,17 +102,22 @@ namespace EncryptingData
                     RMCrypto.CreateDecryptor(key, key),
                     CryptoStreamMode.Read);
 
-                StreamReader SReader = new StreamReader(cs);
-                var file = SReader.ReadToEnd();
+                FileStream fsOut = new FileStream(cryptFile.Remove(cryptFile.IndexOf(" enc"), 4), FileMode.Create);
+                long fileLength = fsCrypt.Length;
+                long totalBytes = 0;
+                int data = 0;
+                while ((data = cs.ReadByte()) != -1)
+                {
+                    fsOut.WriteByte((byte)data);
+                    double persentage = (double)totalBytes * 100.0 / fileLength;
+                    OnProgressChanged(persentage);
+                }
+                    
 
-                //FileStream fsIn = new FileStream(cryptFile.Remove(cryptFile.IndexOf(" enc"), 4), FileMode.Create);
-                //fsIn.
-
-                File.WriteAllText(cryptFile.Remove(cryptFile.IndexOf(" enc"), 4), file);
-
-                SReader.Close();
+                fsOut.Close();
                 cs.Close();
                 fsCrypt.Close();
+                OnActionEnded();
             }
             catch (AggregateException ae)
             {

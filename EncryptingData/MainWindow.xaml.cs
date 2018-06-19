@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -13,6 +14,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 
 namespace EncryptingData
 {
@@ -26,6 +28,8 @@ namespace EncryptingData
         {
             InitializeComponent();
             _model = new Model();
+            _model.OnProgressChanged += ProgressChanged;
+            _model.OnActionEnded += ActionEnd;
         }
 
         private void ButtonFile_Click(object sender, RoutedEventArgs e)
@@ -44,7 +48,7 @@ namespace EncryptingData
         {
             if (TextBoxKey.Text.Length >= 8)
             {
-                if ((bool) RadioButtonEncrypt.IsChecked)
+                if ((bool)RadioButtonEncrypt.IsChecked)
                 {
                     _model.StartEncrypt(TextBoxKey.Text);
                 }
@@ -63,6 +67,30 @@ namespace EncryptingData
         private void ButtonCancel_Click(object sender, RoutedEventArgs e)
         {
             _model.TokenSource.Cancel();
-        }        
+        }
+
+        public void ProgressChanged(double progress)
+        {
+            this.Dispatcher.BeginInvoke(DispatcherPriority.Normal,
+                (ThreadStart)delegate ()
+                {
+                    ProgressEncrypt.Value = progress;
+                }
+            );
+        }
+
+        public void ActionEnd()
+        {
+            this.Dispatcher.BeginInvoke(DispatcherPriority.Normal,
+                (ThreadStart)delegate ()
+                {
+                    ProgressEncrypt.Value = ProgressEncrypt.Maximum;                    
+                    if (MessageBox.Show("Operation finished successfully!", "+", MessageBoxButton.OK, MessageBoxImage.Information) == MessageBoxResult.OK)
+                    {
+                        ProgressEncrypt.Value = 0;
+                    }
+                }
+            );
+        }
     }
 }
