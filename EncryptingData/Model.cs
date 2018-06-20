@@ -25,7 +25,7 @@ namespace EncryptingData
         public Model()
         {
             _tokenSource = new CancellationTokenSource();
-            _RMCrypto = new RijndaelManaged() { Mode = CipherMode.CBC, Padding = PaddingMode.None };
+            _RMCrypto = new RijndaelManaged();
         }
 
         public string Path { get => _path; set => _path = value; }
@@ -33,7 +33,14 @@ namespace EncryptingData
 
         public void StartEncrypt(String password)
         {
+            _tokenSource = new CancellationTokenSource();
             Task.Run(() => Encrypt(password));
+        }
+
+        public void StartDecipher(String password)
+        {
+            _tokenSource = new CancellationTokenSource();
+            Task.Run(() => Decipher(password));
         }
 
         public void Encrypt(String password)
@@ -49,7 +56,6 @@ namespace EncryptingData
                 string cryptFile = System.IO.Path.GetDirectoryName(_path) + "\\" + System.IO.Path.GetFileNameWithoutExtension(_path) + " enc" + System.IO.Path.GetExtension(_path);
                 fsCrypt = new FileStream(cryptFile, FileMode.Create);
 
-                _RMCrypto.Padding = PaddingMode.ANSIX923;
                 cs = new CryptoStream(fsCrypt,
                     _RMCrypto.CreateEncryptor(key, key),
                     CryptoStreamMode.Write);
@@ -60,9 +66,18 @@ namespace EncryptingData
                 long totalBytes = 0;
                 double persentage = 0;                
                 int chunkSize;
+                int part = 100;
                 checked
                 {
-                    chunkSize = (int)fsIn.Length / 100;
+                    while (true)
+                    {
+                        if (fsIn.Length % part == 0)
+                        {
+                            chunkSize = (int)fsIn.Length / part;
+                            break;
+                        }
+                        part++;
+                    }
                 }
 
                 for (long i = 0; i < fsIn.Length; i += chunkSize)
@@ -92,29 +107,30 @@ namespace EncryptingData
             {
                 if (ae.InnerException is OperationCanceledException)
                 {
-                    MessageBox.Show("Encrypting was canceled!", "+");
-                    //DeleteFile(fsCrypt);
+                    MessageBox.Show("Encrypting was canceled!", "+");                    
                 }
                 else
                 {
-                    MessageBox.Show(ae.Message, "Oooops");
-                    //DeleteFile(fsCrypt);
+                    MessageBox.Show(ae.Message, "Oooops");                    
                 }
             }
             catch (Exception e)
             {
-                MessageBox.Show(e.Message, "Oooops");
-                //DeleteFile(fsCrypt);
+                MessageBox.Show(e.Message, "Oooops");               
             }
             finally
             {
-                fsIn.Close();
-                cs.Close();
-                fsCrypt.Close();                
+                fsIn?.Close();
+                cs?.Close();
+                fsCrypt?.Close();
+                if (_tokenSource != null && _tokenSource.Token.IsCancellationRequested)
+                {
+                    DeleteFile(fsCrypt);
+                }
             }
         }
 
-        public void StartDecipher(String password)
+        public void Decipher(String password)
         {
             FileStream fsCrypt = null;
             CryptoStream cs = null;
@@ -128,7 +144,6 @@ namespace EncryptingData
 
                 fsOut = new FileStream(cryptFile.Remove(cryptFile.IndexOf(" enc"), 4), FileMode.Create);
 
-                _RMCrypto.Padding = PaddingMode.None;
                 cs = new CryptoStream(fsOut,
                     _RMCrypto.CreateDecryptor(key, key),
                     CryptoStreamMode.Write);
@@ -138,9 +153,23 @@ namespace EncryptingData
 
 
                 int chunkSize;
+                int part = 100;
                 checked
                 {
-                    chunkSize = (int)fsCrypt.Length / 100;
+                    while (true)
+                    {
+                        if (fsCrypt.Length % part == 0)
+                        {
+                            chunkSize = (int)fsCrypt.Length / part;
+                            break;
+                        }
+                        part++;
+                        if (part > 200)
+                        {
+                            chunkSize = (int)fsCrypt.Length / part;
+                            break;
+                        }
+                    }
                 }
 
                 for (long i = 0; i < fsCrypt.Length; i += chunkSize)
@@ -151,13 +180,6 @@ namespace EncryptingData
                     {
                         totalBytes += bytesRead;
                         persentage = (double)totalBytes * 100.0 / fileLength;                        
-                        if (bytesRead != chunkSize)
-                        {
-                            for (int x = bytesRead - 1; x < chunkSize; x++)
-                            {
-                                chunkData[x] = 0;
-                            }
-                        }
                         cs.Write(chunkData, 0, bytesRead);
                         OnProgressChanged(persentage);
                         _tokenSource.Token.ThrowIfCancellationRequested();
@@ -170,25 +192,27 @@ namespace EncryptingData
             {
                 if (ae.InnerException is OperationCanceledException)
                 {
-                    MessageBox.Show("Decrypting was canceled!", "+");
-                    //DeleteFile(fsOut);
+                    MessageBox.Show("Decrypting was canceled!", "+");                    
                 }
                 else
                 {
-                    MessageBox.Show(ae.Message, "Oooops");
-                    //DeleteFile(fsOut);
+                    MessageBox.Show(ae.Message, "Oooops");                    
                 }
             }
             catch (Exception e)
             {
-                MessageBox.Show(e.Message, "Oooops");
-                //DeleteFile(fsOut);
+                MessageBox.Show(e.Message, "Oooops");                
             }
             finally
             {
-                fsOut.Close();
-                cs.Close();
-                fsCrypt.Close();                
+                fsOut?.Close();
+                cs?.Clear();
+                cs?.Close();
+                fsCrypt?.Close();
+                if (_tokenSource != null &&_tokenSource.Token.IsCancellationRequested)
+                {
+                    DeleteFile(fsOut);
+                }
             }
         }
 

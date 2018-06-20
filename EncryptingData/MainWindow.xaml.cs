@@ -48,6 +48,11 @@ namespace EncryptingData
         {
             if (TextBoxKey.Text.Length >= 8)
             {
+                ButtonCancel.IsEnabled = true;
+                ButtonStart.IsEnabled = false;
+                ButtonOpenFile.IsEnabled = false;
+                RadioButtonEncrypt.IsEnabled = false;
+                RadioButtonDecipher.IsEnabled = false;
                 if ((bool)RadioButtonEncrypt.IsChecked)
                 {
                     _model.StartEncrypt(TextBoxKey.Text);
@@ -66,6 +71,11 @@ namespace EncryptingData
 
         private void ButtonCancel_Click(object sender, RoutedEventArgs e)
         {
+            ButtonCancel.IsEnabled = false;
+            ButtonStart.IsEnabled = true;
+            ButtonOpenFile.IsEnabled = true;
+            RadioButtonEncrypt.IsEnabled = true;
+            RadioButtonDecipher.IsEnabled = true;
             _model.TokenSource.Cancel();
         }
 
