@@ -98,6 +98,11 @@ namespace EncryptingData
                     if (MessageBox.Show("Operation finished successfully!", "+", MessageBoxButton.OK, MessageBoxImage.Information) == MessageBoxResult.OK)
                     {
                         ProgressEncrypt.Value = 0;
+                        ButtonCancel.IsEnabled = false;
+                        ButtonStart.IsEnabled = true;
+                        ButtonOpenFile.IsEnabled = true;
+                        RadioButtonEncrypt.IsEnabled = true;
+                        RadioButtonDecipher.IsEnabled = true;
                     }
                 }
             );
